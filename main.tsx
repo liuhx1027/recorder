@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useState, useEffect } from "react";
 import { styles, BACKGROUND_COLOR } from "./App.style";
 import { Text, View, TouchableHighlight, Slider } from "react-native";
 
@@ -17,7 +17,19 @@ interface OwnProps {
 
 let SAMPLE_SOUND: Sound = null;
 function SampleAudio(props: OwnProps) {
-  const [sliderPosition, setSliderPostion] = useState(0);
+  const [sliderPosition, setSliderPosition] = useState(0);
+  const [duration, setDuration] = useState(1);
+  // const [internalSentenceIndex, setInternalSentenceIndex] = useState(
+  //   props.sentenceIndex
+  // );
+
+  const setSentenceIndex = (index: number) => {
+    props.setSentenceIndex(index);
+
+    const startPosition = props.pauses[index] * 1000;
+    SAMPLE_SOUND.setPositionAsync(startPosition);
+    setSliderPosition(startPosition / duration);
+  };
 
   if (SAMPLE_SOUND === null) {
     SAMPLE_SOUND = new Sound();
@@ -26,13 +38,8 @@ function SampleAudio(props: OwnProps) {
     })
       .then((value: PlaybackStatus) => {
         if (value.isLoaded) {
-          const startPosition = props.pauses[props.sentenceIndex] * 1000;
-          SAMPLE_SOUND.playFromPositionAsync(startPosition);
-          // setSliderPostion(startPosition / value.durationMillis);
-          SAMPLE_SOUND.setOnPlaybackStatusUpdate(status => {
-            if (status.isLoaded)
-              setSliderPostion(status.positionMillis / status.durationMillis);
-          });
+          setDuration(value.durationMillis);
+          setSentenceIndex(props.sentenceIndex);
         }
       })
       .catch(e => {
@@ -40,17 +47,41 @@ function SampleAudio(props: OwnProps) {
       });
   }
 
-  const playOrPause = useCallback(() => {
-    SAMPLE_SOUND.getStatusAsync().then(status => {
-      if (status.isLoaded === false) return;
+  const playOrPause = useCallback(
+    (alwayPlay: boolean = false) => {
+      SAMPLE_SOUND.getStatusAsync().then(status => {
+        console.log({ status, index: props.sentenceIndex });
+        if (status.isLoaded === false) return;
 
-      if (status.isPlaying) {
-        SAMPLE_SOUND.pauseAsync();
-      } else {
-        SAMPLE_SOUND.playAsync();
-      }
-    });
-  }, []);
+        if (status.isPlaying && !alwayPlay) {
+          SAMPLE_SOUND.pauseAsync();
+        } else {
+          SAMPLE_SOUND.playFromPositionAsync(
+            props.pauses[props.sentenceIndex] * 1000
+          );
+        }
+      });
+    },
+    [props.sentenceIndex]
+  );
+
+  useEffect(() => {
+    if (SAMPLE_SOUND)
+      SAMPLE_SOUND.setOnPlaybackStatusUpdate(status => {
+        if (status.isLoaded) {
+          setSliderPosition(status.positionMillis / status.durationMillis);
+
+          if (
+            status.positionMillis >=
+            props.pauses[props.sentenceIndex + 1] * 1000
+          ) {
+            console.log(status.positionMillis, props.sentenceIndex);
+            SAMPLE_SOUND.pauseAsync();
+          }
+        }
+      });
+    playOrPause(true);
+  }, [props.sentenceIndex]);
 
   return (
     <>
@@ -66,7 +97,7 @@ function SampleAudio(props: OwnProps) {
           <TouchableHighlight
             underlayColor={BACKGROUND_COLOR}
             onPress={() => {
-              props.setSentenceIndex(props.sentenceIndex - 1);
+              setSentenceIndex(props.sentenceIndex - 1);
             }}
           >
             <AntDesign name="stepbackward" size={32} />
@@ -94,7 +125,7 @@ function SampleAudio(props: OwnProps) {
           <TouchableHighlight
             underlayColor={BACKGROUND_COLOR}
             onPress={() => {
-              props.setSentenceIndex(props.sentenceIndex + 1);
+              setSentenceIndex(props.sentenceIndex + 1);
             }}
           >
             <AntDesign name="stepforward" size={32} />
