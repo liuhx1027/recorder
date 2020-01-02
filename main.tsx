@@ -1,11 +1,21 @@
 import React, { useCallback, useState, useEffect } from "react";
 import { styles, BACKGROUND_COLOR } from "./App.style";
-import { Text, View, TouchableHighlight, Slider } from "react-native";
+import {
+  Text,
+  View,
+  TouchableHighlight,
+  Slider,
+  Image,
+  Dimensions,
+  Picker
+} from "react-native";
 
 import { AntDesign, MaterialCommunityIcons } from "@expo/vector-icons";
 import Constants from "expo-constants";
 import { Sound } from "expo-av/build/Audio";
 import { PlaybackStatus } from "expo-av/build/AV";
+import { Audio } from "expo-av";
+import * as FileSystem from "expo-file-system";
 
 interface OwnProps {
   mp3FilePath: string;
@@ -19,9 +29,6 @@ let SAMPLE_SOUND: Sound = null;
 function SampleAudio(props: OwnProps) {
   const [sliderPosition, setSliderPosition] = useState(0);
   const [duration, setDuration] = useState(1);
-  // const [internalSentenceIndex, setInternalSentenceIndex] = useState(
-  //   props.sentenceIndex
-  // );
 
   const setSentenceIndex = (index: number) => {
     props.setSentenceIndex(index);
@@ -50,7 +57,6 @@ function SampleAudio(props: OwnProps) {
   const playOrPause = useCallback(
     (alwayPlay: boolean = false) => {
       SAMPLE_SOUND.getStatusAsync().then(status => {
-        console.log({ status, index: props.sentenceIndex });
         if (status.isLoaded === false) return;
 
         if (status.isPlaying && !alwayPlay) {
@@ -66,7 +72,7 @@ function SampleAudio(props: OwnProps) {
   );
 
   useEffect(() => {
-    if (SAMPLE_SOUND)
+    if (SAMPLE_SOUND) {
       SAMPLE_SOUND.setOnPlaybackStatusUpdate(status => {
         if (status.isLoaded) {
           setSliderPosition(status.positionMillis / status.durationMillis);
@@ -75,12 +81,12 @@ function SampleAudio(props: OwnProps) {
             status.positionMillis >=
             props.pauses[props.sentenceIndex + 1] * 1000
           ) {
-            console.log(status.positionMillis, props.sentenceIndex);
             SAMPLE_SOUND.pauseAsync();
           }
         }
       });
-    playOrPause(true);
+      playOrPause(true);
+    }
   }, [props.sentenceIndex]);
 
   return (
@@ -104,16 +110,24 @@ function SampleAudio(props: OwnProps) {
           </TouchableHighlight>
         </View>
         <View style={{ flex: 3, alignItems: "center" }}>
-          <TouchableHighlight
-            underlayColor={BACKGROUND_COLOR}
-            onPress={() => {
-              playOrPause();
+          <Picker
+            selectedValue={props.sentenceIndex}
+            onValueChange={index => {
+              setSentenceIndex(index);
             }}
+            style={{ width: 160 }}
+            mode="dialog"
           >
-            <Text style={{ fontSize: 32 }}>
-              {`${props.sentenceIndex}/${props.pauses.length.toString()}`}
-            </Text>
-          </TouchableHighlight>
+            {props.pauses.map((value, index) =>
+              value === 0 ? null : (
+                <Picker.Item
+                  key={index}
+                  label={`${index}/${props.pauses.length}`}
+                  value={index}
+                />
+              )
+            )}
+          </Picker>
         </View>
         <View
           style={{
@@ -156,7 +170,82 @@ function SampleAudio(props: OwnProps) {
   );
 }
 
-function RecordingAndPlayback() {
+let RECORDING: Audio.Recording = null;
+let SOUND: Audio.Sound = null;
+function RecordingAndPlayback({
+  onPlaySampleSoundClicked
+}: {
+  onPlaySampleSoundClicked: () => void;
+}) {
+  const [isRecording, setIsRecording] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
+
+  const onRecordPressed = async () => {
+    await Audio.setAudioModeAsync({
+      allowsRecordingIOS: true,
+      interruptionModeIOS: Audio.INTERRUPTION_MODE_IOS_DO_NOT_MIX,
+      playsInSilentModeIOS: true,
+      shouldDuckAndroid: true,
+      interruptionModeAndroid: Audio.INTERRUPTION_MODE_ANDROID_DO_NOT_MIX,
+      playThroughEarpieceAndroid: false,
+      staysActiveInBackground: true
+    });
+
+    if (RECORDING !== null) {
+      const status = await RECORDING.getStatusAsync();
+      if (status.isRecording) {
+        await RECORDING.stopAndUnloadAsync();
+        const info = await FileSystem.getInfoAsync(RECORDING.getURI());
+        console.log(`FILE INFO: ${JSON.stringify(info)}`);
+        await Audio.setAudioModeAsync({
+          allowsRecordingIOS: false,
+          interruptionModeIOS: Audio.INTERRUPTION_MODE_IOS_DO_NOT_MIX,
+          playsInSilentModeIOS: true,
+          // playsInSilentLockedModeIOS: true,
+          shouldDuckAndroid: true,
+          interruptionModeAndroid: Audio.INTERRUPTION_MODE_ANDROID_DO_NOT_MIX,
+          playThroughEarpieceAndroid: false,
+          staysActiveInBackground: true
+        });
+        const { sound, status } = await RECORDING.createNewLoadedSoundAsync(
+          {
+            isLooping: false,
+            isMuted: false,
+            volume: 1,
+            rate: 1,
+            shouldCorrectPitch: true
+          },
+          status => {
+            if (status.isLoaded) {
+              setIsPlaying(status.isPlaying);
+            }
+          }
+        );
+        SOUND = sound;
+
+        return;
+      } else {
+        RECORDING.setOnRecordingStatusUpdate(null);
+        RECORDING = null;
+      }
+    }
+
+    const recording = new Audio.Recording();
+    await recording.prepareToRecordAsync(
+      JSON.parse(JSON.stringify(Audio.RECORDING_OPTIONS_PRESET_HIGH_QUALITY))
+    );
+    recording.setOnRecordingStatusUpdate(status => {
+      if (status.canRecord) {
+        setIsRecording(status.isRecording);
+      } else if (status.isDoneRecording) {
+        setIsRecording(false);
+      }
+    });
+
+    RECORDING = recording;
+    await RECORDING.startAsync();
+  };
+
   return (
     <View
       style={[
@@ -180,13 +269,13 @@ function RecordingAndPlayback() {
         <TouchableHighlight
           underlayColor={BACKGROUND_COLOR}
           style={[styles.wrapper]}
-          onPress={() => {}}
+          onPress={onRecordPressed}
           // disabled={this.state.isLoading}
         >
           <MaterialCommunityIcons
             name="microphone"
             size={64}
-            // color={this.state.isRecording ? "red" : "black"}
+            color={isRecording ? "red" : "black"}
           />
         </TouchableHighlight>
       </View>
@@ -199,10 +288,15 @@ function RecordingAndPlayback() {
         <TouchableHighlight
           underlayColor={BACKGROUND_COLOR}
           style={styles.wrapper}
-          onPress={() => {}}
+          onPress={() => {
+            if (SOUND !== null) SOUND.playFromPositionAsync(0);
+          }}
           // disabled={!this.state.isPlaybackAllowed || this.state.isLoading}
         >
-          <MaterialCommunityIcons name={"play"} size={64} />
+          <MaterialCommunityIcons
+            name={isPlaying ? "pause" : "play"}
+            size={64}
+          />
         </TouchableHighlight>
       </View>
       <View
@@ -214,9 +308,7 @@ function RecordingAndPlayback() {
         <TouchableHighlight
           underlayColor={BACKGROUND_COLOR}
           style={styles.wrapper}
-          onPress={() => {
-            // this._playCurrent();
-          }}
+          onPress={onPlaySampleSoundClicked}
         >
           <MaterialCommunityIcons name="redo" size={64} />
         </TouchableHighlight>
@@ -270,7 +362,11 @@ export function Main(props: OwnProps) {
             // alignContent: "center"
           }}
         >
-          <Text style={{ backgroundColor: "pink" }}>Picture</Text>
+          <Image
+            style={{ width: Dimensions.get("window").width, height: 280 }}
+            source={require("./assets/sample-image.jpg")}
+          />
+          {/* <Text style={{ backgroundColor: "pink" }}>Picture</Text> */}
         </View>
       </View>
 
@@ -284,7 +380,13 @@ export function Main(props: OwnProps) {
           alignSelf: "stretch"
         }}
       >
-        <RecordingAndPlayback />
+        <RecordingAndPlayback
+          onPlaySampleSoundClicked={() => {
+            SAMPLE_SOUND.playFromPositionAsync(
+              props.pauses[props.sentenceIndex] * 1000
+            );
+          }}
+        />
         <View />
       </View>
     </View>
