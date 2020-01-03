@@ -16,6 +16,7 @@ import { Sound } from "expo-av/build/Audio";
 import { PlaybackStatus } from "expo-av/build/AV";
 import { Audio } from "expo-av";
 import * as FileSystem from "expo-file-system";
+import ImageViewer from "./components/ImageViewer";
 
 interface OwnProps {
   mp3FilePath: string;
@@ -28,6 +29,7 @@ interface OwnProps {
 let SAMPLE_SOUND: Sound = null;
 function SampleAudio(props: OwnProps) {
   const [sliderPosition, setSliderPosition] = useState(0);
+  const [positionMillis, setPositionMillis] = useState(0);
   const [duration, setDuration] = useState(1);
 
   const setSentenceIndex = (index: number) => {
@@ -44,6 +46,7 @@ function SampleAudio(props: OwnProps) {
       uri: props.mp3FilePath
     })
       .then((value: PlaybackStatus) => {
+        SAMPLE_SOUND.setProgressUpdateIntervalAsync(200);
         if (value.isLoaded) {
           setDuration(value.durationMillis);
           setSentenceIndex(props.sentenceIndex);
@@ -76,6 +79,7 @@ function SampleAudio(props: OwnProps) {
       SAMPLE_SOUND.setOnPlaybackStatusUpdate(status => {
         if (status.isLoaded) {
           setSliderPosition(status.positionMillis / status.durationMillis);
+          setPositionMillis(status.positionMillis);
 
           if (
             status.positionMillis >=
@@ -149,7 +153,7 @@ function SampleAudio(props: OwnProps) {
       <View />
       <View
         style={{
-          flex: 1,
+          flex: 2,
           flexDirection: "column",
           justifyContent: "space-between",
           alignItems: "center",
@@ -165,6 +169,9 @@ function SampleAudio(props: OwnProps) {
           maximumTrackTintColor="black"
           minimumTrackTintColor="white"
         />
+        <Text style={{ alignSelf: "flex-end" }}>
+          {(positionMillis / 1000).toFixed(2)}
+        </Text>
       </View>
     </>
   );
@@ -362,10 +369,11 @@ export function Main(props: OwnProps) {
             // alignContent: "center"
           }}
         >
-          <Image
+          {/* <Image
             style={{ width: Dimensions.get("window").width, height: 280 }}
             source={require("./assets/sample-image.jpg")}
-          />
+          /> */}
+          <ImageViewer />
           {/* <Text style={{ backgroundColor: "pink" }}>Picture</Text> */}
         </View>
       </View>

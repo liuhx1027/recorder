@@ -2163,6 +2163,16 @@ expo-font@~8.0.0:
   dependencies:
     fontfaceobserver "^2.1.0"
 
+expo-image-deep-zoom@^2.1.2:
+  version "2.1.2"
+  resolved "https://registry.yarnpkg.com/expo-image-deep-zoom/-/expo-image-deep-zoom-2.1.2.tgz#9b5d711d2d672c2f7786c4f59dbd540cd21c8fbc"
+  integrity sha512-ukxkmbkfBGUwaHqIkuC9YhQvnsb2e3Tuv5Zd14Hx6PQq65a9t+tR4/na/vYTIDw21x93rlk8kiKJw9xHR9I8Mw==
+
+expo-image-manipulator@^8.0.0:
+  version "8.0.0"
+  resolved "https://registry.yarnpkg.com/expo-image-manipulator/-/expo-image-manipulator-8.0.0.tgz#d7a8ba836a417f7fd1f07db5cde4eb7c0611d608"
+  integrity sha512-7KaQca4szyNllM30ZAnyL7ww83/YJFDl4Yr/4/WglXAKas96WOBztsF7/CPrboEVh/LzfqtSFW0PtyYgrC2o9Q==
+
 expo-keep-awake@~8.0.0:
   version "8.0.0"
   resolved "https://registry.yarnpkg.com/expo-keep-awake/-/expo-keep-awake-8.0.0.tgz#f9200a876a5db86e3f0aec8843428a918cdc08d6"
@@ -4093,6 +4103,16 @@ react-is@^16.8.1, react-is@^16.8.4:
   version "16.12.0"
   resolved "https://registry.yarnpkg.com/react-is/-/react-is-16.12.0.tgz#2cc0fe0fba742d97fd527c42a13bec4eeb06241c"
   integrity sha512-rPCkf/mWBtKc97aLL9/txD8DZdemK0vkA3JMLShjlJB3Pj3s+lpf1KaBzMfQrAmhMQB0n1cU/SUGgKKBCe837Q==
+
+react-native-image-pan-zoom@^2.1.11:
+  version "2.1.11"
+  resolved "https://registry.yarnpkg.com/react-native-image-pan-zoom/-/react-native-image-pan-zoom-2.1.11.tgz#61bcb69219d95e76a9797d23e4a2e8e0bd654ae9"
+  integrity sha512-ZCisGUFpPchHXsjT7ZI0anlSLPgcTmjRKXqpVnPu3RDWFXfKjuL4zpY57DX4Y8YgGZCpbf9fApN7KjVYody2Mw==
+
+react-native-maps@^0.26.1:
+  version "0.26.1"
+  resolved "https://registry.yarnpkg.com/react-native-maps/-/react-native-maps-0.26.1.tgz#6ec316259b38d259c8974448d894bd7a23101da4"
+  integrity sha512-p4VTB8YB5ZmOmDRCUpoHZkm05amZwhIo04AJMBbB9+JAR2PNNfpo0vceoWX0Mag4wnePkdzPomeWMplr/wimTg==
 
 react-native-screens@2.0.0-alpha.12:
   version "2.0.0-alpha.12"

@@ -3,12 +3,20 @@ import { Audio } from "expo-av";
 import NoPermission from "./components/no-permission";
 import * as Permissions from "expo-permissions";
 import { Main } from "./main";
-import { AsyncStorage } from "react-native";
+import { AsyncStorage, Text } from "react-native";
+
+interface SampleAudio {
+  name: string;
+  url: string;
+  pauses: number[];
+}
 
 export default function App() {
   const [haveRecordingPermissions, setHaveRecordingPermissions] = useState(
     false
   );
+
+  const [sampleAudios, setSimpleAudios] = useState<SampleAudio[]>(null);
 
   const [sentenceIndex, _setSentenceIndex] = useState(1);
   const setSentenceIndex = (index: number) => {
@@ -21,6 +29,18 @@ export default function App() {
   };
 
   useEffect(() => {
+    fetch("http://survey.liutaoran.com/meta-data/sample-audios.json")
+      .then(async response => {
+        // alert(response);
+        const audioData = await response.json();
+        setSimpleAudios(audioData);
+        console.log(audioData);
+      })
+      .catch(e => {
+        alert(e);
+        console.log(e);
+      });
+
     Permissions.askAsync(Permissions.AUDIO_RECORDING).then(response => {
       setHaveRecordingPermissions(response.status === "granted");
 
@@ -47,39 +67,17 @@ export default function App() {
   if (!haveRecordingPermissions) {
     return <NoPermission />;
   } else {
-    return (
-      <Main
-        sentenceIndex={sentenceIndex}
-        setSentenceIndex={setSentenceIndex}
-        fileName="Chapter 2 - 1"
-        mp3FilePath="https://www.schubert-verlag.de/spektrum/audio/10_spektrum_a2-1.mp3"
-        pauses={[
-          0,
-          3.67306,
-          5.84141,
-          9.95145,
-          16.9,
-          26.9111,
-          32.8232,
-          38.013,
-          46.538,
-          55.2204,
-          59.5655,
-          69.9711,
-          80.4829,
-          87.0944,
-          98.2458,
-          106.172,
-          109.853,
-          117.233,
-          121.634,
-          128.099,
-          136.153,
-          147.271,
-          158.581,
-          165.844
-        ]}
-      />
-    );
+    if (!sampleAudios) {
+      return <Text>loading...</Text>;
+    } else
+      return (
+        <Main
+          sentenceIndex={sentenceIndex}
+          setSentenceIndex={setSentenceIndex}
+          fileName="Chapter 2 - 1"
+          mp3FilePath={sampleAudios[0].url}
+          pauses={sampleAudios[0].pauses}
+        />
+      );
   }
 }
