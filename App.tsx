@@ -29,7 +29,7 @@ export default function App() {
   };
 
   useEffect(() => {
-    fetch("http://survey.liutaoran.com/meta-data/sample-audios.json")
+    fetch("http://survey.liutaoran.com/meta-data/a2-1-14.json")
       .then(async response => {
         // alert(response);
         const audioData = await response.json();
@@ -74,7 +74,7 @@ export default function App() {
         <Main
           sentenceIndex={sentenceIndex}
           setSentenceIndex={setSentenceIndex}
-          fileName="Chapter 2 - 1"
+          fileName={"Chapter 2 - 14"}
           mp3FilePath={sampleAudios[0].url}
           pauses={sampleAudios[0].pauses}
         />
