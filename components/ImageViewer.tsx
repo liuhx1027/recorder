@@ -2,7 +2,11 @@ import React from "react";
 import { Image, Dimensions, ScrollView } from "react-native";
 import ImageZoom from "react-native-image-pan-zoom";
 
-export default class App extends React.Component {
+interface OwnProps {
+  imageUrls: string[];
+}
+
+export default class ImageViewer extends React.Component<OwnProps> {
   render() {
     // console.log(Dimensions.get("window").width);
     return (
@@ -14,9 +18,9 @@ export default class App extends React.Component {
       // >
       <ScrollView horizontal={true}>
         <Image
-          style={{ width: 2874 / 4.7, height: 1293 / 4.7 }}
+          style={{ width: 2247 / 4.7, height: 1563 / 4.7 }}
           source={{
-            uri: "http://survey.liutaoran.com/meta-data/a2-1-14.jpg"
+            uri: this.props.imageUrls[0]
           }}
         />
       </ScrollView>

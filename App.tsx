@@ -8,6 +8,7 @@ import { AsyncStorage, Text } from "react-native";
 interface SampleAudio {
   name: string;
   url: string;
+  imageUrls: string[];
   pauses: number[];
 }
 
@@ -29,7 +30,7 @@ export default function App() {
   };
 
   useEffect(() => {
-    fetch("http://survey.liutaoran.com/meta-data/a2-1-14.json")
+    fetch("http://survey.liutaoran.com/meta-data/a2-1-17.json")
       .then(async response => {
         // alert(response);
         const audioData = await response.json();
@@ -76,6 +77,7 @@ export default function App() {
           setSentenceIndex={setSentenceIndex}
           fileName={"Chapter 2 - 14"}
           mp3FilePath={sampleAudios[0].url}
+          imageUrls={sampleAudios[0].imageUrls}
           pauses={sampleAudios[0].pauses}
         />
       );

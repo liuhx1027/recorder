@@ -11,6 +11,7 @@ import { SampleAudio } from "./components/SampleAudio";
 
 interface OwnProps {
   mp3FilePath: string;
+  imageUrls: string[];
   fileName: string;
   pauses: number[];
   sentenceIndex: number;
@@ -83,7 +84,7 @@ export function Main(props: OwnProps) {
               // alignContent: "center"
             }}
           >
-            <ImageViewer />
+            <ImageViewer imageUrls={props.imageUrls} />
           </View>
         </View>
 
